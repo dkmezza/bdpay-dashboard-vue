@@ -69,6 +69,9 @@
 </template>
 
 <script setup lang="ts">
+import SidebarItem from '../ui/SidebarItem.vue'
+import { ref } from 'vue'
+
 // Current page tracking 
 const currentPage = ref('dashboard')
 
