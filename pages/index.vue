@@ -2,8 +2,9 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Enhanced Top Navigation -->
     <TopNavigation 
-      page-title="Dashboard"
-      user-name="Leo DiCaprio"
+      :page-title="'Dashboard'"
+      :user-name="user?.fullName || 'Loading...'"
+      @logout="handleLogout"
     />
 
     <div class="flex">
@@ -12,145 +13,158 @@
 
       <!-- Main content -->
       <main class="flex-1 p-6">
-        <!-- Account Cards Section -->
-        <AccountCardsSection />
-
-        <!-- Main dashboard content -->
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
-          <!-- Money Flow Chart - Takes 2 columns -->
-          <div class="xl:col-span-2">
-            <MoneyFlowChart />
-          </div>
-
-          <!-- Statistics Card - Takes 1 column -->
-          <div>
-            <StatisticsCard />
+        <!-- Loading State -->
+        <div v-if="loading" class="flex items-center justify-center h-64">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Loading your dashboard...</p>
           </div>
         </div>
 
-        <!-- Transactions Table Section -->
-        <TransactionsSection />
+        <!-- Error State -->
+        <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div class="flex items-center">
+            <div class="text-red-600 mr-3">⚠️</div>
+            <div>
+              <h3 class="text-red-800 font-medium">Error loading dashboard</h3>
+              <p class="text-red-700 text-sm">{{ error }}</p>
+              <button 
+                @click="loadDashboardData"
+                class="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
 
-        <!-- Bottom section - Success message and final stats -->
-        <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <!-- Success message - Takes 2 columns -->
-          <div class="xl:col-span-2">
-            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-sm border border-green-200 p-8">
-              <div class="flex items-center mb-4">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                  <CheckCircleIcon class="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h2 class="text-2xl font-bold text-gray-900">🎉 Dashboard Complete!</h2>
-                  <p class="text-gray-600">All components successfully implemented with professional styling.</p>
-                </div>
-              </div>
-              
-              <!-- Feature showcase -->
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <div class="bg-white rounded-lg p-4 border border-green-100">
-                  <div class="text-green-600 mb-2">✅ Navigation</div>
-                  <div class="text-sm text-gray-600">Interactive sidebar with real Heroicons</div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-4 border border-blue-100">
-                  <div class="text-blue-600 mb-2">✅ Account Cards</div>
-                  <div class="text-sm text-gray-600">Live data with trend indicators</div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-4 border border-purple-100">
-                  <div class="text-purple-600 mb-2">✅ Money Flow Chart</div>
-                  <div class="text-sm text-gray-600">Interactive bars with tooltips</div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-4 border border-pink-100">
-                  <div class="text-pink-600 mb-2">✅ Statistics Panel</div>
-                  <div class="text-sm text-gray-600">Progress bars and action buttons</div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-4 border border-orange-100">
-                  <div class="text-orange-600 mb-2">✅ Transactions Table</div>
-                  <div class="text-sm text-gray-600">Sortable with status indicators</div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-4 border border-cyan-100">
-                  <div class="text-cyan-600 mb-2">✅ Responsive Design</div>
-                  <div class="text-sm text-gray-600">Mobile, tablet, desktop ready</div>
-                </div>
-              </div>
+        <!-- Dashboard Content -->
+        <div v-else>
+          <!-- Account Cards Section with real data -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <AccountCard 
+              v-for="account in accounts" 
+              :key="account.id"
+              :title="account.accountName"
+              :amount="parseFloat(account.currentBalance)"
+              :change="account.percentageChange || 0"
+              :period="'vs Last month'"
+            />
+          </div>
 
-              <!-- Tech stack -->
-              <div class="bg-white rounded-lg p-6 border border-gray-200">
-                <h4 class="font-medium text-gray-900 mb-4">🚀 Tech Stack Used:</h4>
-                <div class="flex flex-wrap gap-2">
-                  <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">Nuxt 3</span>
-                  <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">TypeScript</span>
-                  <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Tailwind CSS</span>
-                  <span class="px-3 py-1 bg-pink-100 text-pink-800 text-sm rounded-full">Heroicons</span>
-                  <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">Vue 3 Composition API</span>
-                  <span class="px-3 py-1 bg-cyan-100 text-cyan-800 text-sm rounded-full">Responsive Design</span>
-                </div>
-              </div>
+          <!-- Main dashboard content -->
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+            <!-- Money Flow Chart with real data -->
+            <div class="xl:col-span-2">
+              <MoneyFlowChart :chart-data="chartData" />
+            </div>
+
+            <!-- Statistics Card with real data -->
+            <div>
+              <StatisticsCard :statistics-data="statisticsData" />
             </div>
           </div>
 
-          <!-- Final stats sidebar - Takes 1 column -->
-          <div class="space-y-6">
-            <!-- Component count -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Dashboard Stats</h3>
-              
-              <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600">Total Components</span>
-                  <span class="font-semibold text-gray-900">15+</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600">Interactive Elements</span>
-                  <span class="font-semibold text-blue-600">12</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600">Data Visualizations</span>
-                  <span class="font-semibold text-purple-600">3</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600">API Ready</span>
-                  <span class="font-semibold text-green-600">✅ Yes</span>
-                </div>
+          <!-- Recent Transactions Table with real data -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                <select 
+                  v-model="selectedPeriod"
+                  class="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  @change="loadTransactions"
+                >
+                  <option value="current">Current Month</option>
+                  <option value="last">Last Month</option>
+                  <option value="last3">Last 3 Months</option>
+                </select>
               </div>
             </div>
-
-            <!-- Next steps -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">🔮 Next Steps</h3>
-              
-              <div class="space-y-3 text-sm">
-                <div class="flex items-center text-blue-600">
-                  <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                  <span>Connect to Spring Boot API</span>
-                </div>
-                <div class="flex items-center text-purple-600">
-                  <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                  <span>Add authentication & routing</span>
-                </div>
-                <div class="flex items-center text-green-600">
-                  <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                  <span>Implement real-time updates</span>
-                </div>
-                <div class="flex items-center text-orange-600">
-                  <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
-                  <span>Add more dashboard features</span>
-                </div>
-              </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Business Name
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr 
+                    v-for="transaction in transactions" 
+                    :key="transaction.id" 
+                    class="hover:bg-gray-50 transition-colors"
+                  >
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div 
+                          class="w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm font-medium"
+                          :class="getIconBackground(transaction.transactionType)"
+                        >
+                          <component :is="getTransactionIcon(transaction.transactionType)" class="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div class="text-sm font-medium text-gray-900">{{ transaction.businessName }}</div>
+                          <div class="text-xs text-gray-500">{{ transaction.category }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDate(transaction.transactionDate) }}
+                    </td>
+                    
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <span 
+                        :class="transaction.transactionType === 'INCOME' ? 'text-green-600' : 'text-gray-900'"
+                      >
+                        {{ transaction.transactionType === 'INCOME' ? '+' : '' }}${{ parseFloat(transaction.amount).toLocaleString() }}
+                      </span>
+                    </td>
+                    
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span 
+                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                        :class="getStatusClasses(transaction.status)"
+                      >
+                        {{ transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1).toLowerCase() }}
+                      </span>
+                    </td>
+                    
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
+                        @click="handleTransactionAction(transaction.id)"
+                      >
+                        <EllipsisVerticalIcon class="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            <!-- Hurrray -->
-            <div class="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-6 text-white">
-              <div class="text-center">
-                <div class="text-3xl mb-2">🏆</div>
-                <div class="font-bold mb-1">Hurrray!</div>
-                <div class="text-sm opacity-90">I've built a production-ready dashboard with modern technologies and best practices.</div>
+            <!-- Empty state -->
+            <div v-if="transactions.length === 0" class="text-center py-12">
+              <div class="text-gray-400 mb-2">
+                <DocumentTextIcon class="w-12 h-12 mx-auto" />
               </div>
+              <h4 class="text-lg font-medium text-gray-900 mb-2">No transactions found</h4>
+              <p class="text-gray-500">Your recent transactions will appear here.</p>
             </div>
           </div>
         </div>
@@ -160,19 +174,170 @@
 </template>
 
 <script setup lang="ts">
-import { CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { 
+  EllipsisVerticalIcon,
+  DocumentTextIcon,
+  BanknotesIcon,
+  ShoppingCartIcon
+} from '@heroicons/vue/24/outline'
+
+// Protect this route
+definePageMeta({
+  middleware: 'auth'
+})
 
 // Explicit imports
 import TopNavigation from '~/components/navigation/TopNavigation.vue'
 import Sidebar from '~/components/navigation/Sidebar.vue'
-import AccountCardsSection from '~/components/dashboard/AccountCardsSection.vue'
+import AccountCard from '~/components/dashboard/AccountCard.vue'
 import MoneyFlowChart from '~/components/dashboard/MoneyFlowChart.vue'
 import StatisticsCard from '~/components/dashboard/StatisticsCard.vue'
-import TransactionsSection from '~/components/dashboard/TransactionsSection.vue'
 
-useHead({
-  title: 'Dashboard - Complete!'
+const { user, logout } = useAuth()
+const { 
+  fetchAccounts, 
+  fetchRecentTransactions, 
+  fetchChartData, 
+  fetchStatistics 
+} = useApi()
+
+// Types for API responses
+interface Account {
+  id: number
+  accountName: string
+  accountType: string
+  currentBalance: string
+  previousBalance: string
+  percentageChange: number
+}
+
+interface Transaction {
+  id: number
+  businessName: string
+  category: string
+  amount: string
+  transactionType: 'INCOME' | 'EXPENSE'
+  status: 'PENDING' | 'SUCCESS' | 'FAILED'
+  description: string
+  transactionDate: string
+  accountId: number
+}
+
+interface ChartData {
+  income: number[]
+  expense: number[]
+  months: string[]
+}
+
+interface StatisticsData {
+  categories: Array<{
+    category: string
+    amount: number
+  }>
+  total: number
+}
+
+// Reactive data
+const loading = ref(true)
+const error = ref('')
+const accounts = ref<Account[]>([])
+const transactions = ref<Transaction[]>([])
+const chartData = ref<ChartData | null>(null)
+const statisticsData = ref<StatisticsData | null>(null)
+const selectedPeriod = ref('current')
+
+// Load all dashboard data
+const loadDashboardData = async () => {
+  if (!user.value?.id) return
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    // Load accounts
+    const accountsResponse = await fetchAccounts(user.value.id)
+    accounts.value = accountsResponse.accounts || []
+
+    // Load transactions
+    await loadTransactions()
+
+    // Load chart data
+    const chartResponse = await fetchChartData(user.value.id)
+    chartData.value = chartResponse
+
+    // Load statistics
+    const statsResponse = await fetchStatistics(user.value.id)
+    statisticsData.value = statsResponse
+
+  } catch (err: any) {
+    console.error('Error loading dashboard:', err)
+    error.value = err.message || 'Failed to load dashboard data'
+  } finally {
+    loading.value = false
+  }
+}
+
+// Load transactions
+const loadTransactions = async () => {
+  if (!user.value?.id) return
+
+  try {
+    const response = await fetchRecentTransactions(user.value.id)
+    transactions.value = response.transactions || []
+  } catch (err: any) {
+    console.error('Error loading transactions:', err)
+  }
+}
+
+// Helper functions
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  })
+}
+
+const getStatusClasses = (status: string) => {
+  const classes = {
+    PENDING: 'bg-yellow-100 text-yellow-800',
+    SUCCESS: 'bg-green-100 text-green-800', 
+    FAILED: 'bg-red-100 text-red-800'
+  }
+  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800'
+}
+
+const getIconBackground = (type: string) => {
+  return type === 'INCOME' 
+    ? 'bg-green-100 text-green-600'
+    : 'bg-orange-100 text-orange-600'
+}
+
+const getTransactionIcon = (type: string) => {
+  return type === 'INCOME' ? BanknotesIcon : ShoppingCartIcon
+}
+
+const handleTransactionAction = (transactionId: number) => {
+  console.log(`Action for transaction: ${transactionId}`)
+  // Implement transaction actions (view, edit, delete)
+}
+
+const handleLogout = async () => {
+  await logout()
+}
+
+// Load data on mount
+onMounted(() => {
+  if (user.value) {
+    loadDashboardData()
+  }
 })
 
-console.log('🎉 Complete BDPay Dashboard loaded successfully!')
+// Set page title
+useHead({
+  title: 'Dashboard - BDPay'
+})
+
+console.log('🎉 Dashboard loaded with real API integration!')
 </script>
