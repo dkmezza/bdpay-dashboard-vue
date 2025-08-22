@@ -1,9 +1,10 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Enhanced Top Navigation -->
+    <!-- Enhanced Top Navigation with working logout -->
     <TopNavigation 
       :page-title="'Dashboard'"
       :user-name="user?.fullName || 'Loading...'"
+      :user-email="user?.email || ''"
       @logout="handleLogout"
     />
 
@@ -170,6 +171,31 @@
         </div>
       </main>
     </div>
+
+    <!-- Logout Confirmation Modal (optional) -->
+    <div 
+      v-if="showLogoutConfirm"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-sm mx-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Confirm Logout</h3>
+        <p class="text-gray-600 mb-4">Are you sure you want to logout from your account?</p>
+        <div class="flex space-x-3">
+          <button
+            @click="confirmLogout"
+            class="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+          >
+            Logout
+          </button>
+          <button
+            @click="cancelLogout"
+            class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -245,6 +271,9 @@ const transactions = ref<Transaction[]>([])
 const chartData = ref<ChartData | null>(null)
 const statisticsData = ref<StatisticsData | null>(null)
 const selectedPeriod = ref('current')
+
+// Logout confirmation
+const showLogoutConfirm = ref(false)
 
 // Load all dashboard data
 const loadDashboardData = async () => {
@@ -323,8 +352,23 @@ const handleTransactionAction = (transactionId: number) => {
   // Implement transaction actions (view, edit, delete)
 }
 
-const handleLogout = async () => {
-  await logout()
+// Logout handling
+const handleLogout = () => {
+  showLogoutConfirm.value = true
+}
+
+const confirmLogout = async () => {
+  showLogoutConfirm.value = false
+  try {
+    await logout()
+    console.log('✅ User logged out successfully')
+  } catch (error) {
+    console.error('❌ Logout error:', error)
+  }
+}
+
+const cancelLogout = () => {
+  showLogoutConfirm.value = false
 }
 
 // Load data on mount
@@ -339,5 +383,5 @@ useHead({
   title: 'Dashboard - BDPay'
 })
 
-console.log('🎉 Dashboard loaded with real API integration!')
+console.log('🎉 Dashboard loaded with working logout functionality!')
 </script>
