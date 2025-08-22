@@ -42,22 +42,13 @@
         <!-- Dashboard Content -->
         <div v-else>
           <!-- Account Cards Section with real data -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <AccountCard 
-              v-for="account in accounts" 
-              :key="account.id"
-              :title="account.accountName"
-              :amount="parseFloat(account.currentBalance)"
-              :change="account.percentageChange || 0"
-              :period="'vs Last month'"
-            />
-          </div>
+          <AccountCardsSection :user-id="user?.id" />
 
           <!-- Main dashboard content -->
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
             <!-- Money Flow Chart with real data -->
             <div class="xl:col-span-2">
-              <MoneyFlowChart :chart-data="chartData" />
+              <MoneyFlowChart :user-id="user?.id" />
             </div>
 
             <!-- Statistics Card with real data -->
@@ -215,15 +206,13 @@ definePageMeta({
 // Explicit imports
 import TopNavigation from '~/components/navigation/TopNavigation.vue'
 import Sidebar from '~/components/navigation/Sidebar.vue'
-import AccountCard from '~/components/dashboard/AccountCard.vue'
+import AccountCardsSection from '~/components/dashboard/AccountCardsSection.vue'
 import MoneyFlowChart from '~/components/dashboard/MoneyFlowChart.vue'
 import StatisticsCard from '~/components/dashboard/StatisticsCard.vue'
 
 const { user, logout } = useAuth()
 const { 
-  fetchAccounts, 
   fetchRecentTransactions, 
-  fetchChartData, 
   fetchStatistics 
 } = useApi()
 
@@ -249,12 +238,6 @@ interface Transaction {
   accountId: number
 }
 
-interface ChartData {
-  income: number[]
-  expense: number[]
-  months: string[]
-}
-
 interface StatisticsData {
   categories: Array<{
     category: string
@@ -266,9 +249,7 @@ interface StatisticsData {
 // Reactive data
 const loading = ref(true)
 const error = ref('')
-const accounts = ref<Account[]>([])
 const transactions = ref<Transaction[]>([])
-const chartData = ref<ChartData | null>(null)
 const statisticsData = ref<StatisticsData | null>(null)
 const selectedPeriod = ref('current')
 
@@ -283,16 +264,8 @@ const loadDashboardData = async () => {
   error.value = ''
 
   try {
-    // Load accounts
-    const accountsResponse = await fetchAccounts(user.value.id)
-    accounts.value = accountsResponse.accounts || []
-
     // Load transactions
     await loadTransactions()
-
-    // Load chart data
-    const chartResponse = await fetchChartData(user.value.id)
-    chartData.value = chartResponse
 
     // Load statistics
     const statsResponse = await fetchStatistics(user.value.id)
