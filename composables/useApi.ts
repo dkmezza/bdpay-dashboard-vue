@@ -1,34 +1,120 @@
-// Future API integration layer
+// Types for API responses
+interface AccountsResponse {
+  accounts: Array<{
+    id: number
+    accountName: string
+    accountType: string
+    currentBalance: string
+    previousBalance: string
+    percentageChange: number
+  }>
+  totalBalance: number
+}
+
+interface TransactionsResponse {
+  transactions: Array<{
+    id: number
+    businessName: string
+    category: string
+    amount: string
+    transactionType: 'INCOME' | 'EXPENSE'
+    status: 'PENDING' | 'SUCCESS' | 'FAILED'
+    description: string
+    transactionDate: string
+    accountId: number
+  }>
+}
+
+interface ChartDataResponse {
+  income: number[]
+  expense: number[]
+  months: string[]
+}
+
+interface StatisticsResponse {
+  categories: Array<{
+    category: string
+    amount: number
+  }>
+  total: number
+}
+
 export const useApi = () => {
-  const baseURL = 'http://localhost:8080/api' // Your Spring Boot API
-  
-  const fetchAccounts = async () => {
-    // This will connect to your Spring Boot backend later
-    // For now, return mock data
-    return {
-      data: [
-        {
-          id: '1',
-          title: 'Business account',
-          amount: 24098.00,
-          change: -0.90,
-          changeType: 'down' as const,
-          period: 'vs Last month'
-        }
-        // ... more mock data
-      ]
+  const { token } = useAuth()
+
+  // Create authenticated fetch wrapper
+  const authenticatedFetch = async <T>(url: string, options: any = {}): Promise<T> => {
+    if (!token.value) {
+      throw new Error('No authentication token')
     }
+
+    return await $fetch<T>(url, {
+      baseURL: 'http://localhost:8080/api',
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+        ...options.headers
+      },
+      ...options
+    })
   }
-  
-  const fetchTransactions = async () => {
-    // Mock data for now
-    return {
-      data: []
-    }
+
+  // Account API calls
+  const fetchAccounts = async (userId: number): Promise<AccountsResponse> => {
+    return await authenticatedFetch<AccountsResponse>(`/accounts/user/${userId}`)
   }
-  
+
+  const fetchWalletAccount = async (userId: number) => {
+    return await authenticatedFetch(`/accounts/wallet/user/${userId}`)
+  }
+
+  // Transaction API calls
+  const fetchRecentTransactions = async (userId: number): Promise<TransactionsResponse> => {
+    return await authenticatedFetch<TransactionsResponse>(`/transactions/recent/user/${userId}`)
+  }
+
+  const fetchTransactions = async (userId: number, page = 0, size = 10) => {
+    return await authenticatedFetch(`/transactions/user/${userId}?page=${page}&size=${size}`)
+  }
+
+  const fetchChartData = async (userId: number, year?: number): Promise<ChartDataResponse> => {
+    const yearParam = year ? `?year=${year}` : ''
+    return await authenticatedFetch<ChartDataResponse>(`/transactions/chart/user/${userId}${yearParam}`)
+  }
+
+  const fetchStatistics = async (userId: number): Promise<StatisticsResponse> => {
+    return await authenticatedFetch<StatisticsResponse>(`/transactions/statistics/user/${userId}`)
+  }
+
+  // Transaction actions
+  const createTransaction = async (transactionData: any) => {
+    return await authenticatedFetch('/transactions', {
+      method: 'POST',
+      body: transactionData
+    })
+  }
+
+  const updateTransactionStatus = async (transactionId: number, status: string) => {
+    return await authenticatedFetch(`/transactions/${transactionId}/status`, {
+      method: 'PUT',
+      body: { status }
+    })
+  }
+
+  const deleteTransaction = async (transactionId: number) => {
+    return await authenticatedFetch(`/transactions/${transactionId}`, {
+      method: 'DELETE'
+    })
+  }
+
   return {
     fetchAccounts,
-    fetchTransactions
+    fetchWalletAccount,
+    fetchRecentTransactions,
+    fetchTransactions,
+    fetchChartData,
+    fetchStatistics,
+    createTransaction,
+    updateTransactionStatus,
+    deleteTransaction
   }
 }
