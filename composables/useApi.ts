@@ -39,6 +39,17 @@ interface StatisticsResponse {
   total: number
 }
 
+// Extended User type for profile management
+export interface User {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  fullName: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export const useApi = () => {
   const { token } = useAuth()
 
@@ -106,6 +117,28 @@ export const useApi = () => {
     })
   }
 
+  // User profile API calls
+  const updateUserProfile = async (userId: number, profileData: { firstName: string, lastName: string }) => {
+    return await authenticatedFetch(`/users/${userId}`, {
+      method: 'PUT',
+      body: profileData
+    })
+  }
+
+  const changeUserPassword = async (userId: number, passwordData: { currentPassword: string, newPassword: string }) => {
+    return await authenticatedFetch(`/users/${userId}/password`, {
+      method: 'PUT', 
+      body: passwordData
+    })
+  }
+
+  const uploadUserAvatar = async (userId: number, formData: FormData) => {
+    return await authenticatedFetch(`/users/${userId}/avatar`, {
+      method: 'POST',
+      body: formData
+    })
+  }
+
   return {
     fetchAccounts,
     fetchWalletAccount,
@@ -115,6 +148,9 @@ export const useApi = () => {
     fetchStatistics,
     createTransaction,
     updateTransactionStatus,
-    deleteTransaction
+    deleteTransaction,
+    updateUserProfile,
+    changeUserPassword,
+    uploadUserAvatar
   }
 }
