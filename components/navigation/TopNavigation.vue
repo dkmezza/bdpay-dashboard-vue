@@ -172,7 +172,7 @@ const handleMenuAction = (action: string) => {
   switch (action) {
     case 'profile':
       console.log('Navigate to profile')
-      // navigateTo('/profile')
+      navigateTo('/profile')
       break
     case 'settings':
       console.log('Navigate to settings')
