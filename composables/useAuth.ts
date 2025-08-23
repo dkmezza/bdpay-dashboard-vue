@@ -12,14 +12,18 @@ interface RegisterResponse {
 
 interface UserResponse extends User {
   createdAt: string
+  updatedAt?: string
 }
 
-type User = {
+// Mutable User type for profile management
+export type User = {
   id: number
   firstName: string
   lastName: string
   email: string
   fullName: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export const useAuth = () => {
@@ -112,13 +116,21 @@ export const useAuth = () => {
     }
   }
 
+  // Update user data (for profile updates)
+  const updateUserData = (updatedFields: Partial<User>) => {
+    if (user.value) {
+      Object.assign(user.value, updatedFields)
+    }
+  }
+
   return {
     token: readonly(token),
-    user: readonly(user),
+    user,  // Removing readonly to allow mutations
     login,
     register,
     logout,
     isAuthenticated,
-    getCurrentUser
+    getCurrentUser,
+    updateUserData
   }
 }
