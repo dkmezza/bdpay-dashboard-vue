@@ -53,7 +53,7 @@
 
             <!-- Statistics Card with real data -->
             <div>
-              <StatisticsCard :statistics-data="statisticsData" />
+              <StatisticsCard :user-id="user?.id" @action="handleStatisticsAction" />
             </div>
           </div>
 
@@ -212,8 +212,7 @@ import StatisticsCard from '~/components/dashboard/StatisticsCard.vue'
 
 const { user, logout } = useAuth()
 const { 
-  fetchRecentTransactions, 
-  fetchStatistics 
+  fetchRecentTransactions 
 } = useApi()
 
 // Types for API responses
@@ -238,19 +237,10 @@ interface Transaction {
   accountId: number
 }
 
-interface StatisticsData {
-  categories: Array<{
-    category: string
-    amount: number
-  }>
-  total: number
-}
-
 // Reactive data
 const loading = ref(true)
 const error = ref('')
 const transactions = ref<Transaction[]>([])
-const statisticsData = ref<StatisticsData | null>(null)
 const selectedPeriod = ref('current')
 
 // Logout confirmation
@@ -266,10 +256,6 @@ const loadDashboardData = async () => {
   try {
     // Load transactions
     await loadTransactions()
-
-    // Load statistics
-    const statsResponse = await fetchStatistics(user.value.id)
-    statisticsData.value = statsResponse
 
   } catch (err: any) {
     console.error('Error loading dashboard:', err)
@@ -323,6 +309,25 @@ const getTransactionIcon = (type: string) => {
 const handleTransactionAction = (transactionId: number) => {
   console.log(`Action for transaction: ${transactionId}`)
   // Implement transaction actions (view, edit, delete)
+}
+
+const handleStatisticsAction = (action: string) => {
+  console.log(`Statistics action: ${action}`)
+  // Handle statistics card actions
+  switch (action) {
+    case 'send':
+      // Navigate to send money page or open modal
+      break
+    case 'receive':
+      // Navigate to receive money page or open modal
+      break
+    case 'invoicing':
+      // Navigate to invoicing page
+      break
+    case 'more':
+      // Show more options menu
+      break
+  }
 }
 
 // Logout handling
