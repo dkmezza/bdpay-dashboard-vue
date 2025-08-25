@@ -78,6 +78,38 @@ export const useApi = () => {
     return await authenticatedFetch(`/accounts/wallet/user/${userId}`)
   }
 
+  const createAccount = async (userId: number, accountData: any) => {
+    // Backend expects: { accountName, accountType, initialBalance }
+    return await authenticatedFetch(`/accounts/user/${userId}`, {
+      method: 'POST',
+      body: {
+        accountName: accountData.accountName,
+        accountType: accountData.accountType,
+        initialBalance: accountData.initialBalance
+      }
+    })
+  }
+
+  const updateAccount = async (accountId: number, accountData: any) => {
+    // Use the full account update endpoint
+    return await authenticatedFetch(`/accounts/${accountId}`, {
+      method: 'PUT',
+      body: {
+        accountName: accountData.accountName,
+        currentBalance: accountData.currentBalance,
+        spendingLimit: accountData.spendingLimit,
+        totalLimit: accountData.totalLimit,
+        cardType: accountData.cardType
+      }
+    })
+  }
+
+  const deleteAccount = async (accountId: number) => {
+    return await authenticatedFetch(`/accounts/${accountId}`, {
+      method: 'DELETE'
+    })
+  }
+
   // Transaction API calls
   const fetchRecentTransactions = async (userId: number): Promise<TransactionsResponse> => {
     return await authenticatedFetch<TransactionsResponse>(`/transactions/recent/user/${userId}`)
@@ -142,6 +174,9 @@ export const useApi = () => {
   return {
     fetchAccounts,
     fetchWalletAccount,
+    createAccount,
+    updateAccount,
+    deleteAccount,
     fetchRecentTransactions,
     fetchTransactions,
     fetchChartData,
