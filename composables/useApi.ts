@@ -39,6 +39,24 @@ interface StatisticsResponse {
   total: number
 }
 
+interface PaginatedTransactionsResponse {
+  transactions: Array<{
+    id: number
+    businessName: string
+    category: string
+    amount: string
+    transactionType: 'INCOME' | 'EXPENSE'
+    status: 'PENDING' | 'SUCCESS' | 'FAILED'
+    description: string
+    transactionDate: string
+    accountId: number
+  }>
+  totalElements: number
+  totalPages: number
+  currentPage: number
+  size: number
+}
+
 // Extended User type for profile management
 export interface User {
   id: number
@@ -111,12 +129,12 @@ export const useApi = () => {
   }
 
   // Transaction API calls
-  const fetchRecentTransactions = async (userId: number): Promise<TransactionsResponse> => {
-    return await authenticatedFetch<TransactionsResponse>(`/transactions/recent/user/${userId}`)
+  const fetchTransactions = async (userId: number, page = 0, size = 10): Promise<PaginatedTransactionsResponse> => {
+    return await authenticatedFetch<PaginatedTransactionsResponse>(`/transactions/user/${userId}?page=${page}&size=${size}`)
   }
 
-  const fetchTransactions = async (userId: number, page = 0, size = 10) => {
-    return await authenticatedFetch(`/transactions/user/${userId}?page=${page}&size=${size}`)
+  const fetchRecentTransactions = async (userId: number): Promise<TransactionsResponse> => {
+    return await authenticatedFetch<TransactionsResponse>(`/transactions/recent/user/${userId}`)
   }
 
   const fetchChartData = async (userId: number, year?: number): Promise<ChartDataResponse> => {
