@@ -4,47 +4,46 @@
     <nav class="flex-1 p-4">
       <div class="space-y-1">
         <SidebarItem 
-          :active="currentPage === 'dashboard'"
+          :active="$route.path === '/'"
           icon="home"
           text="Dashboard"
-          @click="handleNavClick"
+          @click="handleNavClick('/')"
         />
         
         <SidebarItem 
-          :active="currentPage === 'wallet'"
+          :active="$route.path === '/accounts'"
           icon="wallet"
-          text="My Wallet"
-          @click="handleNavClick"
+          text="My Accounts"
+          @click="handleNavClick('/accounts')"
         />
         
         <SidebarItem 
-          :active="currentPage === 'activity'"
+          :active="$route.path === '/transactions'"
           icon="activity"
-          text="Activity"
-          :hasDropdown="true"
-          @click="handleNavClick"
+          text="Transactions"
+          @click="handleNavClick('/transactions')"
         />
         
         <SidebarItem 
-          :active="currentPage === 'invoices'"
+          :active="$route.path === '/invoices'"
           icon="invoices"
           text="Invoices"
-          @click="handleNavClick"
+          @click="handleNavClick('/invoices')"
         />
         
         <SidebarItem 
-          :active="currentPage === 'inbox'"
+          :active="$route.path === '/inbox'"
           icon="inbox"
           text="Inbox"
           :badge="1"
-          @click="handleNavClick"
+          @click="handleNavClick('/inbox')"
         />
         
         <SidebarItem 
-          :active="currentPage === 'analytics'"
+          :active="$route.path === '/analytics'"
           icon="analytics"
           text="Analytics"
-          @click="handleNavClick"
+          @click="handleNavClick('/analytics')"
         />
       </div>
     </nav>
@@ -55,13 +54,14 @@
         <SidebarItem 
           icon="help"
           text="Get Help"
-          @click="handleNavClick"
+          @click="handleNavClick('/help')"
         />
         
         <SidebarItem 
+          :active="$route.path === '/profile'"
           icon="settings"
-          text="Settings"
-          @click="handleNavClick"
+          text="Profile"
+          @click="handleNavClick('/profile')"
         />
       </div>
     </div>
@@ -70,14 +70,10 @@
 
 <script setup lang="ts">
 import SidebarItem from '../ui/SidebarItem.vue'
-import { ref } from 'vue'
-
-// Current page tracking 
-const currentPage = ref('dashboard')
 
 // Handle navigation clicks
-const handleNavClick = (page: string) => {
-  currentPage.value = page
-  console.log(`Navigating to: ${page}`)
+const handleNavClick = (path: string) => {
+  console.log(`Navigating to: ${path}`)
+  navigateTo(path)
 }
 </script>
