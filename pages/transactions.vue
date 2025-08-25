@@ -196,23 +196,36 @@ const loadTransactions = async () => {
   error.value = ''
 
   try {
-    // In real implementation, pass filters/page to backend:
-    // const response = await fetchTransactions(user.value.id, currentPage.value - 1, pageSize.value, filters)
-    // const rows: Transaction[] = response?.transactions ?? []
-    // For now, use mock and pretend this is the response:
-    const rows: Transaction[] = mockTransactions
-
+    // Calling the real backend API
+    const response = await fetchTransactions(user.value.id, currentPage.value - 1, pageSize.value)
+    
+    // ✅ Safely access response properties with proper typing
+    const rows: Transaction[] = response?.transactions || []
+    
+    // Apply client-side filters to the real data
     const filtered = applyClientFilters(rows)
     transactions.value = filtered
-    totalTransactions.value = filtered.length
-    totalPages.value = Math.max(1, Math.ceil(totalTransactions.value / pageSize.value))
+    
+    // ✅ Safely update pagination info from backend response
+    totalTransactions.value = response?.totalElements || filtered.length
+    totalPages.value = response?.totalPages || Math.max(1, Math.ceil(totalTransactions.value / pageSize.value))
+    
+    console.log('✅ Loaded transactions from backend:', filtered.length, 'transactions')
   } catch (err) {
     console.error('Error loading transactions:', err)
     error.value = 'Failed to load transactions.'
+    
+    // ✅ FALLBACK: Using mock data if backend fails
+    console.log('⚠️ Using fallback mock data due to error:', err)
+    const filtered = applyClientFilters(mockTransactions)
+    transactions.value = filtered
+    totalTransactions.value = filtered.length
+    totalPages.value = Math.max(1, Math.ceil(totalTransactions.value / pageSize.value))
   } finally {
     loading.value = false
   }
 }
+
 
 // Template handlers
 const handleLogout = () => logout()
